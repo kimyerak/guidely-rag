@@ -18,7 +18,7 @@ env:
   DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/hello-app
 
 jobs:
-  build-and-deploy in dockerhub:
+  build-and-deploy-dockerhub:
     # GitHub 호스티드 러너 (Ubuntu) 환경에서 실행
     runs-on: ubuntu-latest
 
