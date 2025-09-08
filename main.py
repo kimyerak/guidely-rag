@@ -15,6 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi import Depends
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain.schema import Document
@@ -200,6 +201,9 @@ def startup_event():
         model_kwargs={"device": "cpu"},
     )
 
+    print("===== 데이터베이스 연결 테스트 =====")
+    test_connection()
+
     print("===== Cross-encoder 모델 로드 중 =====")
     cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
     print("===== Cross-encoder 모델 로드 완료 =====")
@@ -258,6 +262,60 @@ class ChatResponse(BaseModel):
                         "source": "https://namu.wiki/w/케이팝",
                         "content": "케이팝 관련 내용..."
                     }
+                ]
+            }
+        }
+
+
+# ---------------------------------------------------------------------------
+# 대화 요약 API용 모델
+# ---------------------------------------------------------------------------
+
+class ConversationMessage(BaseModel):
+    role: str = Field(..., description="메시지 역할 (user, assistant, system)")
+    content: str = Field(..., description="메시지 내용")
+    timestamp: str = Field(None, description="메시지 시간 (선택사항)")
+
+class ConversationSummaryRequest(BaseModel):
+    session_id: str = Field(..., description="대화 세션 ID")
+    messages: List[ConversationMessage] = Field(..., description="대화 메시지 리스트")
+    count: int = Field(default=10, description="생성할 요약 문장 개수", ge=1, le=20)
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "session_id": "550e8400-e29b-41d4-a716-446655440000",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "안녕하세요! 인상주의에 대해 알려주세요",
+                        "timestamp": "2024-01-01T10:00:00Z"
+                    },
+                    {
+                        "role": "assistant", 
+                        "content": "안녕하세요! 인상주의는 19세기 후반 프랑스에서 시작된 미술 운동입니다...",
+                        "timestamp": "2024-01-01T10:00:30Z"
+                    }
+                ],
+                "count": 10
+            }
+        }
+
+class ConversationSummaryResponse(BaseModel):
+    session_id: str = Field(..., description="대화 세션 ID")
+    total_messages: int = Field(..., description="총 메시지 개수")
+    summaries: List[str] = Field(..., description="대화 요약 문장들")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "session_id": "550e8400-e29b-41d4-a716-446655440000",
+                "total_messages": 12,
+                "summaries": [
+                    "까치 문양, 전통 속에서 되살아난 날개짓",
+                    "미라가 던진 질문에 상상력이 끝없이 번져갔어",
+                    "모네의 붓끝에서 피어난 빛의 향연을 만났길",
+                    "인상주의 화가들의 혁신적인 시선을 발견하다"
                 ]
             }
         }
@@ -398,3 +456,124 @@ async def generate_chat_response(req: ChatRequest):
         response=response.content.strip(),
         sources=sources,
     )
+
+
+# ---------------------------------------------------------------------------
+# 엔드포인트: /conversation/summarize - 엔딩크레딧용 대화 요약
+# ---------------------------------------------------------------------------
+
+@app.post("/conversation/summarize", response_model=ConversationSummaryResponse, tags=["Conversation"])
+async def summarize_conversation(req: ConversationSummaryRequest):
+    """
+    엔딩크레딧용 대화 요약 API
+    
+    대화 내용을 분석하여 감성적이고 시적인 한 줄 요약들을 생성합니다.
+    
+    **Parameters:**
+    - **session_id**: 대화 세션 ID
+    - **messages**: 대화 메시지 리스트
+    - **count**: 생성할 요약 문장 개수 (1-20)
+    
+    **Returns:**
+    - **session_id**: 대화 세션 ID
+    - **total_messages**: 총 메시지 개수
+    - **summaries**: 감성적인 한 줄 요약들
+    """
+    logger.info(f"대화 요약 요청: session_id={req.session_id}, 메시지 수={len(req.messages)}")
+    
+    # 대화 내용을 하나의 텍스트로 합치기
+    conversation_text = ""
+    for msg in req.messages:
+        conversation_text += f"{msg.role}: {msg.content}\n"
+    
+    logger.info(f"대화 텍스트 길이: {len(conversation_text)} 문자")
+    
+    # GPT를 사용하여 감성적인 한 줄 요약들 생성
+    llm = ChatOpenAI(model_name="gpt-4o", temperature=0.7)
+    
+    summary_prompt = f"""
+다음은 전시회에서 방문객과 챗봇 간의 대화입니다. 
+이 대화를 바탕으로 엔딩크레딧용 감성적이고 시적인 한 줄 요약 {req.count}개를 만들어주세요.
+
+**대화 내용:**
+{conversation_text}
+
+**요구사항:**
+1. 각 요약은 한 문장 또는 한 구절로 간결하게
+2. 감성적이고 시적인 표현 사용
+3. 방문객이 경험한 감동이나 새로운 발견을 담아내기
+4. 전시회의 분위기와 예술적 감성을 반영
+5. 각 요약은 독립적이면서도 전체적으로 조화로워야 함
+
+**예시 스타일:**
+- "까치 문양, 전통 속에서 되살아난 날개짓"
+- "미라가 던진 질문에 상상력이 끝없이 번져갔어"
+- "모네의 붓끝에서 피어난 빛의 향연을 만났어"
+
+**응답 형식 (JSON):**
+{{
+    "summaries": [
+        "첫 번째 감성적인 요약",
+        "두 번째 감성적인 요약",
+        "세 번째 감성적인 요약"
+    ]
+}}
+
+JSON 형식으로만 응답해주세요:
+"""
+    
+    try:
+        response = llm.invoke(summary_prompt)
+        
+        # JSON 파싱
+        import json
+        import re
+        
+        # JSON 부분만 추출 (```json 태그 제거)
+        json_match = re.search(r'```json\s*(.*?)\s*```', response.content, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            json_str = response.content.strip()
+        
+        summary_data = json.loads(json_str)
+        summaries = summary_data.get("summaries", [])
+        
+        logger.info(f"대화 요약 완료: {len(summaries)}개 요약 생성")
+        
+        return ConversationSummaryResponse(
+            session_id=req.session_id,
+            total_messages=len(req.messages),
+            summaries=summaries
+        )
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON 파싱 오류: {e}")
+        # 파싱 실패시 기본 응답
+        return ConversationSummaryResponse(
+            session_id=req.session_id,
+            total_messages=len(req.messages),
+            summaries=[
+                "의미있는 대화 속에서 새로운 발견을 했어",
+                "전시회에서 만난 특별한 순간들"
+            ]
+        )
+        
+    except Exception as e:
+        logger.error(f"대화 요약 생성 오류: {e}")
+        raise
+
+
+# ---------------------------------------------------------------------------
+# 헬스체크 엔드포인트
+# ---------------------------------------------------------------------------
+
+@app.get("/health", tags=["System"])
+async def health_check():
+    """RAG 서비스 헬스체크"""
+    return {
+        "status": "healthy",
+        "service": "Guidely RAG Service",
+        "vectorstore_ready": vectorstore is not None,
+        "cross_encoder_ready": cross_encoder is not None
+    }

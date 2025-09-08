@@ -9,4 +9,13 @@ pydantic
 python-dotenv
 requests
 beautifulsoup4
-PyMuPDF 
+PyMuPDF
+
+#KT 믿음 쓰기 위해 필요한 모델
+#torch --index-url https://download.pytorch.org/whl/cpu
+#transformers
+#accelerate
+
+#SQL 연결용 
+pymysql
+sqlalchemy

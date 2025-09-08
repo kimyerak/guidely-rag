@@ -11,13 +11,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # requirements 설치 (Guidely_RAG 안에 있음)
-COPY Guidely_RAG/requirements.txt .
+COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-
-# KT 믿음 모델 requirements (선택적)
-COPY Guidely_RAG/KTrequirements.txt .
-RUN pip install -r KTrequirements.txt
 
 # 소스 코드 전체 복사
 COPY . .
