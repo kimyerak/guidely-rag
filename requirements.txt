@@ -16,6 +16,4 @@ PyMuPDF
 #transformers
 #accelerate
 
-#SQL 연결용 
-pymysql
-sqlalchemy
+# RAG 서비스는 stateless - DB 패키지 제거
