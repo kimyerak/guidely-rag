@@ -7,9 +7,13 @@
 - Azure Portal에서 Configuration > General Settings에서 설정
 
 ### Startup Command 설정
-```
-python startup.py
-```
+Azure Portal > Configuration > General Settings에서:
+
+**Startup Command**: `python startup.py`
+
+또는
+
+**Startup Command**: `D:\home\Python39\python.exe startup.py`
 
 ### 환경 변수 설정
 Azure Portal > Configuration > Application Settings에서 다음 변수 추가:

@@ -11,10 +11,21 @@ sys.path.insert(0, current_dir)
 # main 모듈 import 및 실행
 if __name__ == "__main__":
     import uvicorn
-    from main import app
+    
+    # main.py에서 app 객체 import
+    try:
+        from main import app
+    except ImportError as e:
+        print(f"Import error: {e}")
+        print(f"Current directory: {current_dir}")
+        print(f"Python path: {sys.path}")
+        raise
     
     # Azure App Service에서 사용하는 포트 (환경변수에서 가져오거나 기본값 8000)
     port = int(os.environ.get("PORT", 8000))
+    
+    print(f"Starting server on port {port}")
+    print(f"Current working directory: {os.getcwd()}")
     
     uvicorn.run(
         app, 
