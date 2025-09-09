@@ -78,6 +78,16 @@ def startup_event():
         print("===== 벡터스토어 생성 및 저장 완료 =====")
 
 
+@app.get("/", tags=["System"])
+async def root():
+    """RAG 서비스 루트 엔드포인트"""
+    return {
+        "message": "Guidely RAG Service",
+        "status": "running",
+        "docs": "/docs",
+        "health": "/health"
+    }
+
 @app.get("/health", tags=["System"])
 async def health_check():
     """RAG 서비스 헬스체크"""
