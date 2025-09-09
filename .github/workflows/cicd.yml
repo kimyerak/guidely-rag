@@ -15,7 +15,7 @@ concurrency:
 env:
   # Docker Hub 이미지 경로
   # `<username>/hello-app` 형태로 사용 (username은 시크릿에서 주입)
-  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/hello-app
+  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/guidely-rag
 
 jobs:
   build-and-deploy-dockerhub:

@@ -29,6 +29,7 @@ from sentence_transformers import CrossEncoder
 from pydantic import BaseModel, Field
 from config import URLS  # URL 목록만 담고 있는 모듈
 from characters import CHARACTER_STYLE  # 캐릭터 스타일 정의
+from database import test_connection  # DB 연결 테스트 함수
 import textwrap
 import logging
 
@@ -325,7 +326,7 @@ class ConversationSummaryResponse(BaseModel):
 # 엔드포인트: /rag
 # ---------------------------------------------------------------------------
 
-@app.post("/chat", response_model=ChatResponse, tags=["Chat"])
+@app.post("/rag/query", response_model=ChatResponse, tags=["RAG"])
 async def generate_chat_response(req: ChatRequest):
     """
     전시회용 인터랙티브 음성 챗봇 API
@@ -462,7 +463,7 @@ async def generate_chat_response(req: ChatRequest):
 # 엔드포인트: /conversation/summarize - 엔딩크레딧용 대화 요약
 # ---------------------------------------------------------------------------
 
-@app.post("/conversation/summarize", response_model=ConversationSummaryResponse, tags=["Conversation"])
+@app.post("/rag/summarize", response_model=ConversationSummaryResponse, tags=["RAG"])
 async def summarize_conversation(req: ConversationSummaryRequest):
     """
     엔딩크레딧용 대화 요약 API

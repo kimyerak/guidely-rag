@@ -1,21 +1,20 @@
 import os
-import pymysql
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# 데이터베이스 연결 설정
+# 데이터베이스 연결 설정 (실제 Cursor 연결 정보)
 DB_HOST = os.getenv("DB_HOST", "dbguidey2.mysql.database.azure.com")
 DB_PORT = int(os.getenv("DB_PORT", 3306))
-DB_NAME = os.getenv("DB_NAME", "your_database_name")
-DB_USER = os.getenv("DB_USER", "your_username")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "your_password")
-DB_SSL = os.getenv("DB_SSL", "true").lower() == "true"
+DB_NAME = os.getenv("DB_NAME", "guidely2")
+DB_USER = os.getenv("DB_USER", "mysqladmin")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "Strongpassword@")
+DB_SSL = os.getenv("DB_SSL", "false").lower() == "true"  # Cursor에서 SSL 없이 연결됨
 
-# 연결 문자열
-DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?ssl_disabled={not DB_SSL}"
+# 연결 문자열 (Azure MySQL - SSL 비활성화, 방화벽 규칙으로 보안)
+DATABASE_URL = f"mysql+mysqlconnector://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?ssl_disabled=true"
 
 # SQLAlchemy 엔진 생성
 engine = create_engine(DATABASE_URL, echo=True)
