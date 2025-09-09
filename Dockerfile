@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# requirements 설치 (Guidely_RAG 안에 있음)
+# requirements 설치
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
