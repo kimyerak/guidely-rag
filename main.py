@@ -90,7 +90,15 @@ async def root():
 
 @app.get("/health", tags=["System"])
 async def health_check():
-    """RAG 서비스 헬스체크"""
+    """RAG 서비스 헬스체크 - 빠른 응답"""
+    return {
+        "status": "healthy",
+        "service": "Guidely RAG Service"
+    }
+
+@app.get("/health/detailed", tags=["System"])
+async def detailed_health_check():
+    """RAG 서비스 상세 헬스체크"""
     return {
         "status": "healthy",
         "service": "Guidely RAG Service",
