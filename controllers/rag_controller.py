@@ -74,7 +74,7 @@ async def generate_chat_response(
     if not relevance_service.check_relevance(user_message):
         char_style = CHARACTER_STYLE[character]
         return ChatResponse(
-            response=f"안녕하세요! 저는 국립중앙박물관의 챗봇입니다! 관련 있는 질문을 해주세요 ㅎㅎ 🎨\n\n케이팝데몬헌터스나 전시회 관련된 질문을 해주시면 도움을 드릴 수 있어요.",
+            response=f"안녕하세요! 저는 국립중앙박물관 호랑이 전시의 챗봇입니다! 🐅\n\n호랑이 전시나 케이팝데몬헌터스에 대해 궁금한 것이 있으시면 언제든 물어보세요!✨",
             sources=[]
         )
     

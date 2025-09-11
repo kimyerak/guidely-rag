@@ -16,7 +16,7 @@ class SummaryService:
     def __init__(self):
         self.llm = ChatOpenAI(model_name="gpt-4o", temperature=0.7)
     
-    def generate_summary(self, session_id: str, messages: List[ConversationMessage], count: int) -> ConversationSummaryResponse:
+    def generate_summary(self, session_id: int, messages: List[ConversationMessage], count: int) -> ConversationSummaryResponse:
         """
         대화 요약 생성
         

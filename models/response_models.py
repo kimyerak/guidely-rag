@@ -24,14 +24,14 @@ class ChatResponse(BaseModel):
 
 
 class ConversationSummaryResponse(BaseModel):
-    session_id: str = Field(..., description="대화 세션 ID")
+    session_id: int = Field(..., description="대화 세션 ID")
     total_messages: int = Field(..., description="총 메시지 개수")
     summaries: List[str] = Field(..., description="대화 요약 문장들")
     
     class Config:
         json_schema_extra = {
             "example": {
-                "session_id": "550e8400-e29b-41d4-a716-446655440000",
+                "session_id": 12345,
                 "total_messages": 12,
                 "summaries": [
                     "까치 문양, 전통 속에서 되살아난 날개짓",

@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/v1/summary-statistics", tags=["Summary Statistic
 
 
 class EndingCreditsRequest(BaseModel):
-    session_id: str
+    session_id: int
     messages: List[Dict[str, Any]]
 
 

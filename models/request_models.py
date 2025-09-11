@@ -25,14 +25,14 @@ class ConversationMessage(BaseModel):
 
 
 class ConversationSummaryRequest(BaseModel):
-    session_id: str = Field(..., description="대화 세션 ID")
+    session_id: int = Field(..., description="대화 세션 ID")
     messages: List[ConversationMessage] = Field(..., description="대화 메시지 리스트")
     count: int = Field(default=10, description="생성할 요약 문장 개수", ge=1, le=20)
 
     class Config:
         json_schema_extra = {
             "example": {
-                "session_id": "550e8400-e29b-41d4-a716-446655440000",
+                "session_id": 12345,
                 "messages": [
                     {
                         "role": "user",
