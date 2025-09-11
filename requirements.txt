@@ -16,4 +16,7 @@ PyMuPDF
 #transformers
 #accelerate
 
-# RAG 서비스는 stateless - DB 패키지 제거
+# PostgreSQL + pgvector 지원
+psycopg2-binary
+numpy
+PyPDF2

@@ -91,6 +91,10 @@ def load_namu_page(url: str) -> Document:
 
 def load_document_from_url(url: str) -> Document:
     """URL 타입에 따라 적절한 로더를 선택하여 Document 반환"""
+    # 로컬 파일인지 확인
+    if not url.startswith('http'):
+        return load_local_file(url)
+    
     parsed_url = urlparse(url)
     
     # PDF 파일인지 확인
@@ -102,3 +106,14 @@ def load_document_from_url(url: str) -> Document:
     else:
         # 기본적으로 웹 페이지로 처리
         return load_namu_page(url)
+
+
+def load_local_file(file_path: str) -> Document:
+    """로컬 파일을 로드하여 Document로 반환"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return Document(page_content=content, metadata={"source": file_path, "type": "local_file"})
+    except Exception as e:
+        logger.exception("[ERROR] 로컬 파일 %s 로딩 실패: %s", file_path, e)
+        return Document(page_content="", metadata={"source": file_path, "type": "local_file"})

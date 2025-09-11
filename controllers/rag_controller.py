@@ -4,7 +4,7 @@ RAG 컨트롤러
 from fastapi import APIRouter, Depends
 from models.request_models import ChatRequest
 from models.response_models import ChatResponse
-from services.rag_service import RAGService
+from services.postgres_rag_service import PostgresRAGService
 from services.relevance_service import RelevanceService
 from characters import CHARACTER_STYLE
 import logging
@@ -14,12 +14,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/rag", tags=["RAG"])
 
 
-def get_rag_service() -> RAGService:
+def get_rag_service() -> PostgresRAGService:
     """RAG 서비스 의존성 주입"""
-    from main import vectorstore, cross_encoder
-    if vectorstore is None or cross_encoder is None:
-        raise Exception("Vectorstore or CrossEncoder not initialized")
-    return RAGService(vectorstore, cross_encoder)
+    return PostgresRAGService()
 
 
 def get_relevance_service() -> RelevanceService:
@@ -30,7 +27,7 @@ def get_relevance_service() -> RelevanceService:
 @router.post("/query", response_model=ChatResponse)
 async def generate_chat_response(
     req: ChatRequest,
-    rag_service: RAGService = Depends(get_rag_service),
+    rag_service: PostgresRAGService = Depends(get_rag_service),
     relevance_service: RelevanceService = Depends(get_relevance_service)
 ):
     """
@@ -74,7 +71,7 @@ async def generate_chat_response(
     if not relevance_service.check_relevance(user_message):
         char_style = CHARACTER_STYLE[character]
         return ChatResponse(
-            response=f"안녕하세요! 저는 국립중앙박물관 호랑이 전시의 챗봇입니다! 🐅\n\n호랑이 전시나 케이팝데몬헌터스에 대해 궁금한 것이 있으시면 언제든 물어보세요!✨",
+            response=f"안녕하세요! 저는 국립중앙박물관 호랑이 전시의 챗봇입니다! 🐅\n\n호랑이 전시에 대해 궁금한 것이 있으시면 언제든 물어보세요!✨",
             sources=[]
         )
     
