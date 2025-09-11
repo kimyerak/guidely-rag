@@ -62,8 +62,8 @@ def startup_event():
         
         # PostgreSQL 연결 테스트
         print("===== PostgreSQL 연결 테스트 =====")
-        from database.connection import get_db_connection
-        with get_db_connection() as (cursor, conn):
+        from database.connection import get_db_cursor
+        with get_db_cursor() as (cursor, conn):
             cursor.execute("SELECT 1")
             print("PostgreSQL 연결 성공")
         
