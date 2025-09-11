@@ -12,11 +12,23 @@ class ChatResponse(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "response": "안녕하세요! 케이팝에 대해 궁금하시군요. 케이팝은...",
+                "response": "안녕하세요! 호랑이 전시에 대해 궁금하시군요. 호랑이는...",
                 "sources": [
                     {
-                        "source": "https://namu.wiki/w/케이팝",
-                        "content": "케이팝 관련 내용..."
+                        "source": "문서: 국립중앙박물관 호랑이 전시",
+                        "content": "호랑이 전시회에 대한 내용...",
+                        "ranking": 1,
+                        "similarity_score": 0.8234,
+                        "document_title": "국립중앙박물관 호랑이 전시",
+                        "chunk_id": 123
+                    },
+                    {
+                        "source": "문서: 호작도 작품 설명",
+                        "content": "호작도는 까치와 호랑이 그림으로...",
+                        "ranking": 2,
+                        "similarity_score": 0.7891,
+                        "document_title": "호작도 작품 설명",
+                        "chunk_id": 124
                     }
                 ]
             }

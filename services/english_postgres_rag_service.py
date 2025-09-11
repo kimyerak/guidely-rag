@@ -93,10 +93,19 @@ class EnglishPostgresRAGService:
             context_parts = []
             sources = []
             
-            for result in top_results:
+            for i, result in enumerate(top_results):
                 context_parts.append(result.chunk_text)
-                if result.document_title and result.document_title not in sources:
-                    sources.append(result.document_title)
+                
+                # Add detailed source information with ranking
+                source_info = {
+                    "source": result.source_url or f"Document: {result.document_title}",
+                    "content": result.chunk_text[:300],
+                    "ranking": i + 1,  # 1부터 시작하는 랭킹
+                    "similarity_score": round(result.similarity, 4),  # 유사도 점수
+                    "document_title": result.document_title,
+                    "chunk_id": result.chunk_id
+                }
+                sources.append(source_info)
             
             context = "\n\n".join(context_parts)
             

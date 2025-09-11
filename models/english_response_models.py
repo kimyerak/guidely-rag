@@ -8,13 +8,30 @@ from typing import List, Optional
 class EnglishRAGQueryResponse(BaseModel):
     """English RAG query response model"""
     response: str = Field(..., description="AI response in English")
-    sources: List[str] = Field(default=[], description="Source documents")
+    sources: List[dict] = Field(default=[], description="Source documents with ranking and similarity scores")
     
     class Config:
         json_schema_extra = {
             "example": {
                 "response": "The Tiger Exhibition showcases traditional Korean tiger artworks and their modern interpretations...",
-                "sources": ["National Museum Tiger Exhibition Guide", "Traditional Korean Art Collection"]
+                "sources": [
+                    {
+                        "source": "Document: National Museum Tiger Exhibition Guide",
+                        "content": "The Tiger Exhibition features traditional Korean tiger artworks...",
+                        "ranking": 1,
+                        "similarity_score": 0.8234,
+                        "document_title": "National Museum Tiger Exhibition Guide",
+                        "chunk_id": 123
+                    },
+                    {
+                        "source": "Document: Traditional Korean Art Collection",
+                        "content": "Traditional Korean tiger paintings show various styles...",
+                        "ranking": 2,
+                        "similarity_score": 0.7891,
+                        "document_title": "Traditional Korean Art Collection",
+                        "chunk_id": 124
+                    }
+                ]
             }
         }
 

@@ -31,12 +31,15 @@ class EnglishRelevanceService:
             
             # General museum terms
             "visit", "tour", "gallery", "display", "collection", "artifact",
-            "history", "heritage", "cultural", "exhibition hall"
+            "history", "heritage", "cultural", "exhibition hall",
+            
+            # Museum services and commerce
+            "news", "purchase", "payment", "ticket", "buy", "shopping"
         ]
         
         # Non-relevant keywords that should be rejected
         self.irrelevant_keywords = [
-            "weather", "restaurant", "hotel", "shopping", "transportation",
+            "weather", "restaurant", "hotel", "transportation",
             "unrelated", "random", "test", "hello", "hi", "bye", "goodbye"
         ]
     

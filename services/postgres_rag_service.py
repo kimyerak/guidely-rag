@@ -77,8 +77,82 @@ class PostgresRAGService:
                 seen_ids.add(result.chunk_id)
                 search_results.append(result)
         
-        # 유사도 순으로 정렬
-        search_results.sort(key=lambda x: x.similarity, reverse=True)
+        # 키워드 매칭 가중치 적용 (질문 기반 동적 키워드 추출)
+        user_message_lower = user_message.lower()
+        logger.info(f"키워드 매칭 가중치 적용 시작 - 검색 결과 {len(search_results)}개")
+        
+        # 질문에서 핵심 키워드 추출 (2글자 이상)
+        import re
+        question_keywords = []
+        
+        # 한글 키워드 추출 (조사 제거)
+        korean_words = re.findall(r'[가-힣]{2,}', user_message)
+        # 조사 제거: '의', '은', '는', '이', '가', '을', '를', '에', '에서' 등
+        particles = ['의', '은', '는', '이', '가', '을', '를', '에', '에서', '로', '으로', '와', '과', '도', '만', '부터', '까지']
+        
+        for word in korean_words:
+            # 조사 제거
+            clean_word = word
+            for particle in particles:
+                if clean_word.endswith(particle):
+                    clean_word = clean_word[:-len(particle)]
+                    break
+            
+            if len(clean_word) >= 2:  # 조사 제거 후 2글자 이상인 경우만
+                question_keywords.append(clean_word)
+        
+        # 영어 키워드 추출
+        english_words = re.findall(r'[a-zA-Z]{3,}', user_message)
+        question_keywords.extend(english_words)
+        
+        # 숫자 포함 키워드도 추출
+        number_words = re.findall(r'[가-힣a-zA-Z]*\d+[가-힣a-zA-Z]*', user_message)
+        question_keywords.extend(number_words)
+        
+        # 중복 제거
+        question_keywords = list(set(question_keywords))
+        
+        logger.info(f"질문: '{user_message}'")
+        logger.info(f"질문에서 추출된 키워드: {question_keywords}")
+        
+        for i, result in enumerate(search_results):
+            chunk_text_lower = result.chunk_text.lower()
+            
+            # 질문 키워드가 문서에 포함된 개수 계산
+            keyword_matches = 0
+            matched_keywords = []
+            
+            for keyword in question_keywords:
+                if keyword.lower() in chunk_text_lower:
+                    keyword_matches += 1
+                    matched_keywords.append(keyword)
+            
+            # 키워드 매칭 개수를 result 객체에 저장
+            result.keyword_matches = keyword_matches
+            
+            logger.info(f"문서 {i+1}: {result.document_title} - 키워드 매칭: {keyword_matches}개")
+            if keyword_matches > 0:
+                logger.info(f"  매칭된 키워드: {matched_keywords}")
+                
+                # 키워드 매칭 개수에 비례하여 가중치 부여 (최대 0.6까지)
+                boost = min(0.6, keyword_matches * 0.15)
+                original_similarity = result.similarity
+                result.similarity += boost
+                logger.info(f"  가중치 적용: {original_similarity:.4f} + {boost:.3f} = {result.similarity:.4f}")
+        
+        # 키워드 매칭 우선 정렬
+        # 1) 키워드 매칭된 문서를 먼저 정렬 (유사도 내림차순)
+        keyword_matches = [r for r in search_results if hasattr(r, 'keyword_matches') and r.keyword_matches > 0]
+        other_results = [r for r in search_results if not hasattr(r, 'keyword_matches') or r.keyword_matches == 0]
+        
+        # 키워드 매칭된 문서들을 키워드 개수 우선, 그 다음 유사도 순으로 정렬
+        keyword_matches.sort(key=lambda x: (-x.keyword_matches, -x.similarity))
+        other_results.sort(key=lambda x: x.similarity, reverse=True)
+        
+        # 최종 결과: 키워드 매칭 문서 + 나머지 문서
+        search_results = keyword_matches + other_results
+        
+        logger.info(f"키워드 매칭 우선 정렬 완료: {len(keyword_matches)}개 키워드 매칭, {len(other_results)}개 일반")
         
         logger.info(f"  -> {len(search_results)}개 청크 검색 완료")
         for i, result in enumerate(search_results):
@@ -142,8 +216,12 @@ class PostgresRAGService:
             {
                 "source": result.source_url or f"문서: {result.document_title}",
                 "content": result.chunk_text[:300],
+                "ranking": i + 1,  # 1부터 시작하는 랭킹
+                "similarity_score": round(result.similarity, 4),  # 유사도 점수 (소수점 4자리)
+                "document_title": result.document_title,
+                "chunk_id": result.chunk_id
             }
-            for result in search_results
+            for i, result in enumerate(search_results)
         ]
         
         logger.info(f"Generated response: {response.content.strip()}")
