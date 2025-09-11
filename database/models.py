@@ -33,6 +33,24 @@ class Document:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Document':
+        # metadata 처리 - 이미 딕셔너리인지 JSON 문자열인지 확인
+        metadata = data.get('metadata')
+        if metadata:
+            if isinstance(metadata, dict):
+                # 이미 딕셔너리인 경우 그대로 사용
+                parsed_metadata = metadata
+            elif isinstance(metadata, str):
+                # JSON 문자열인 경우 파싱
+                try:
+                    parsed_metadata = json.loads(metadata)
+                except json.JSONDecodeError:
+                    # JSON 파싱 실패시 빈 딕셔너리로 설정
+                    parsed_metadata = {}
+            else:
+                parsed_metadata = {}
+        else:
+            parsed_metadata = None
+            
         return cls(
             id=data.get('id'),
             title=data.get('title', ''),
@@ -41,7 +59,7 @@ class Document:
             source_url=data.get('source_url'),
             upload_date=data.get('upload_date'),
             content=data.get('content', ''),
-            metadata=json.loads(data['metadata']) if data.get('metadata') else None,
+            metadata=parsed_metadata,
             is_active=data.get('is_active', True)
         )
 
