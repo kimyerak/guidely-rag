@@ -1,27 +1,30 @@
 """
 관리자 API 컨트롤러
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException
 from typing import Optional
 import logging
 from database.document_service import DocumentService, ChunkService
 from database.models import Document
 from sentence_transformers import SentenceTransformer
+from pydantic import BaseModel
 import os
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+# Pydantic 모델 정의
+class TextDocumentRequest(BaseModel):
+    title: str
+    content: str
+    category: str = "general"
+    source: str = "admin_upload"
+
 # 임베딩 모델 초기화
 embedding_model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
 
 @router.post("/documents/text")
-async def upload_text_document(
-    title: str = Form(...),
-    content: str = Form(...),
-    category: str = Form("general"),
-    source: str = Form("admin_upload")
-):
+async def upload_text_document(request: TextDocumentRequest):
     """
     텍스트 문서 업로드 (할루시네이션 방지용 정보)
     """
@@ -32,14 +35,14 @@ async def upload_text_document(
         
         # 문서 생성
         document = Document(
-            title=title,
-            file_name=f"{title}.txt",
+            title=request.title,
+            file_name=f"{request.title}.txt",
             file_type="text",
-            content=content,
-            source_url=f"admin://text/{title}",
+            content=request.content,
+            source_url=f"admin://text/{request.title}",
             metadata={
-                "source": source,
-                "category": category,
+                "source": request.source,
+                "category": request.category,
                 "upload_type": "text"
             }
         )
@@ -50,7 +53,7 @@ async def upload_text_document(
         # 청크 생성 및 임베딩
         chunk_ids = chunk_service.create_chunks_for_document(
             document_id,
-            content,
+            request.content,
             embedding_model,
             chunk_size=500,
             chunk_overlap=50
@@ -67,33 +70,37 @@ async def upload_text_document(
         logger.error(f"텍스트 문서 업로드 실패: {e}")
         raise HTTPException(status_code=500, detail=f"문서 업로드 실패: {str(e)}")
 
+class PDFDocumentRequest(BaseModel):
+    title: str
+    content: str  # Base64 인코딩된 PDF 내용
+    category: str = "general"
+    source: str = "admin_upload"
+
 @router.post("/documents/pdf")
-async def upload_pdf_document(
-    file: UploadFile = File(...),
-    title: str = Form(...),
-    category: str = Form("general"),
-    source: str = Form("admin_upload")
-):
+async def upload_pdf_document(request: PDFDocumentRequest):
     """
     PDF 문서 업로드 (할루시네이션 방지용 정보)
     """
     try:
-        # PDF 파일 읽기
-        content = await file.read()
+        # Base64 디코딩
+        import base64
+        try:
+            pdf_content = base64.b64decode(request.content)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Base64 디코딩 실패: {str(e)}")
         
-        # PDF 텍스트 추출 (간단한 방법)
-        # 실제로는 PyPDF2나 pdfplumber 등을 사용하는 것이 좋습니다
+        # PDF 텍스트 추출
         try:
             import PyPDF2
             import io
             
-            pdf_reader = PyPDF2.PdfReader(io.BytesIO(content))
+            pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_content))
             text_content = ""
             for page in pdf_reader.pages:
                 text_content += page.extract_text() + "\n"
         except ImportError:
             # PyPDF2가 없으면 기본 텍스트로 처리
-            text_content = content.decode('utf-8', errors='ignore')
+            text_content = pdf_content.decode('utf-8', errors='ignore')
         
         if not text_content.strip():
             raise HTTPException(status_code=400, detail="PDF에서 텍스트를 추출할 수 없습니다.")
@@ -104,16 +111,16 @@ async def upload_pdf_document(
         
         # 문서 생성
         document = Document(
-            title=title,
-            file_name=file.filename,
+            title=request.title,
+            file_name=f"{request.title}.pdf",
             file_type="pdf",
             content=text_content,
-            source_url=f"admin://pdf/{file.filename}",
+            source_url=f"admin://pdf/{request.title}.pdf",
             metadata={
-                "source": source,
-                "category": category,
+                "source": request.source,
+                "category": request.category,
                 "upload_type": "pdf",
-                "original_filename": file.filename
+                "original_filename": f"{request.title}.pdf"
             }
         )
         

@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from config.app_config import CROSS_ENCODER_MODEL
 from controllers.rag_controller import router as rag_router
 from controllers.summary_controller import router as summary_router
-from controllers.admin_controller import router as admin_router  # 임시 비활성화
+from controllers.admin_controller import router as admin_router
 # PostgreSQL 기반 RAG 서비스
 
 
