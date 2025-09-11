@@ -47,12 +47,31 @@ def startup_event():
     global cross_encoder
     
     print("===== RAG 서비스 초기화 중 =====")
-
-    print("===== Cross-encoder 모델 로드 중 =====")
-    cross_encoder = CrossEncoder(CROSS_ENCODER_MODEL)
-    print("===== Cross-encoder 모델 로드 완료 =====")
     
-    print("===== PostgreSQL RAG 서비스 준비 완료 =====")
+    # 환경변수 확인
+    print("=== 환경변수 확인 ===")
+    print(f"POSTGRES_HOST: {os.getenv('POSTGRES_HOST', 'NOT_SET')}")
+    print(f"POSTGRES_DB: {os.getenv('POSTGRES_DB', 'NOT_SET')}")
+    print(f"POSTGRES_USER: {os.getenv('POSTGRES_USER', 'NOT_SET')}")
+    print(f"OPENAI_API_KEY: {'SET' if os.getenv('OPENAI_API_KEY') else 'NOT_SET'}")
+
+    try:
+        print("===== Cross-encoder 모델 로드 중 =====")
+        cross_encoder = CrossEncoder(CROSS_ENCODER_MODEL)
+        print("===== Cross-encoder 모델 로드 완료 =====")
+        
+        # PostgreSQL 연결 테스트
+        print("===== PostgreSQL 연결 테스트 =====")
+        from database.connection import get_db_connection
+        with get_db_connection() as (cursor, conn):
+            cursor.execute("SELECT 1")
+            print("PostgreSQL 연결 성공")
+        
+        print("===== PostgreSQL RAG 서비스 준비 완료 =====")
+    except Exception as e:
+        print(f"❌ 초기화 실패: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 @app.get("/", tags=["System"])
