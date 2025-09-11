@@ -39,12 +39,12 @@ async def summarize_english_conversation(request: EnglishConversationSummaryRequ
             count=request.count
         )
         
-        logger.info(f"English summary generated: {result['summary'][:100]}...")
+        logger.info(f"English summary generated: {len(result['summaries'])} summary sentences")
         
         return EnglishConversationSummaryResponse(
             session_id=result["session_id"],
-            summary=result["summary"],
-            key_topics=result["key_topics"]
+            total_messages=result["total_messages"],
+            summaries=result["summaries"]
         )
         
     except Exception as e:

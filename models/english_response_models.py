@@ -22,15 +22,20 @@ class EnglishRAGQueryResponse(BaseModel):
 class EnglishConversationSummaryResponse(BaseModel):
     """English conversation summary response model"""
     session_id: int = Field(..., description="Session ID", example=12345)
-    summary: str = Field(..., description="Conversation summary in English")
-    key_topics: List[str] = Field(default=[], description="Key topics discussed")
+    total_messages: int = Field(..., description="Total number of messages")
+    summaries: List[str] = Field(..., description="Conversation summary sentences")
     
     class Config:
         json_schema_extra = {
             "example": {
                 "session_id": 12345,
-                "summary": "The conversation covered the Tiger Exhibition, traditional Korean tiger art, and modern interpretations...",
-                "key_topics": ["Tiger Exhibition", "Korean Art", "Traditional Culture"]
+                "total_messages": 12,
+                "summaries": [
+                    "Tiger patterns, wings reborn in tradition",
+                    "Imagination spread endlessly through the questions asked",
+                    "A feast of light blossomed from Monet's brushstrokes",
+                    "Discovered the innovative vision of Impressionist artists"
+                ]
             }
         }
 
