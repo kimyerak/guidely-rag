@@ -36,12 +36,12 @@ class ConversationSummaryRequest(BaseModel):
                 "messages": [
                     {
                         "role": "user",
-                        "content": "안녕하세요! 인상주의에 대해 알려주세요",
+                        "content": "안녕하세요! 이번 전시 테마에에 대해 알려주세요",
                         "timestamp": "2024-01-01T10:00:00Z"
                     },
                     {
                         "role": "assistant", 
-                        "content": "안녕하세요! 인상주의는 19세기 후반 프랑스에서 시작된 미술 운동입니다...",
+                        "content": "안녕하세요! 이번 전시는 ~~~...",
                         "timestamp": "2024-01-01T10:00:30Z"
                     }
                 ],
