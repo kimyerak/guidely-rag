@@ -34,15 +34,16 @@ async def query_english_rag(request: EnglishRAGQueryRequest) -> EnglishRAGQueryR
     try:
         logger.info(f"English RAG query received: {request.message}")
         
-        # Check relevance
-        is_relevant = relevance_service.check_relevance(request.message)
+        # Check relevance - temporarily bypass for debugging
+        logger.info(f"Bypassing relevance check for: {request.message}")
+        is_relevant = True  # Always proceed to RAG for now
         
-        if not is_relevant:
-            logger.info("Query not relevant to Tiger Exhibition")
-            return EnglishRAGQueryResponse(
-                response="I'm here to help with questions about the Tiger Exhibition at the National Museum! Please ask me about Korean tiger art, traditional paintings, or the exhibition itself. I'd love to share information about the beautiful tiger artworks on display! 🐯",
-                sources=[]
-            )
+        # if not is_relevant:
+        #     logger.info("Query not relevant to Tiger Exhibition")
+        #     return EnglishRAGQueryResponse(
+        #         response="I'm here to help with questions about the Tiger Exhibition at the National Museum! Please ask me about Korean tiger art, traditional paintings, or the exhibition itself. I'd love to share information about the beautiful tiger artworks on display! 🐯",
+        #         sources=[]
+        #     )
         
         # Generate response using RAG
         result = rag_service.generate_response(

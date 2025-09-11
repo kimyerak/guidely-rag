@@ -1,5 +1,5 @@
 """
-Azure App Service용 app.py (표준 진입점)
+Azure App Service용 app.py (표준 진입점)!!
 """
 import os
 import sys

@@ -3,10 +3,14 @@ Guidely RAG Server - 메인 애플리케이션
 전시회용 인터랙티브 음성 챗봇을 위한 RAG 서버
 """
 import os
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sentence_transformers import CrossEncoder
 from dotenv import load_dotenv
+
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
 
 from config.app_config import CROSS_ENCODER_MODEL
 from controllers.rag_controller import router as rag_router

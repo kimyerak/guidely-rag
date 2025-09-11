@@ -28,13 +28,14 @@ class EnglishSummaryService:
         
         logger.info("English SummaryService initialized successfully")
     
-    def generate_summary(self, messages: List[Dict[str, str]], session_id: int) -> Dict[str, Any]:
+    def generate_summary(self, messages: List[Dict[str, str]], session_id: int, count: int = 10) -> Dict[str, Any]:
         """
         Generate English conversation summary
         
         Args:
             messages: List of conversation messages
             session_id: Session ID
+            count: Number of summary sentences to generate (default: 10)
             
         Returns:
             Dict containing summary and key topics
@@ -56,7 +57,7 @@ Conversation:
 {conversation_text}
 
 Please provide:
-1. A brief summary (2-3 sentences) of what was discussed
+1. A brief summary (approximately {count} sentences) of what was discussed
 2. Key topics that were covered (list 3-5 main topics)
 
 Focus on:

@@ -35,7 +35,8 @@ async def summarize_english_conversation(request: EnglishConversationSummaryRequ
         # Generate summary
         result = summary_service.generate_summary(
             messages=request.messages,
-            session_id=request.session_id
+            session_id=request.session_id,
+            count=request.count
         )
         
         logger.info(f"English summary generated: {result['summary'][:100]}...")
