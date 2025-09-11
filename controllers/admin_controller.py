@@ -1,7 +1,7 @@
 """
 관리자 API 컨트롤러
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from typing import Optional
 import logging
 from database.document_service import DocumentService, ChunkService
@@ -147,6 +147,78 @@ async def upload_pdf_document(request: PDFDocumentRequest):
     except Exception as e:
         logger.error(f"PDF 문서 업로드 실패: {e}")
         raise HTTPException(status_code=500, detail=f"PDF 업로드 실패: {str(e)}")
+
+@router.post("/documents/pdf-upload")
+async def upload_pdf_file(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    category: str = Form("general"),
+    source: str = Form("admin_upload")
+):
+    """
+    PDF 파일 직접 업로드 (multipart/form-data)
+    """
+    try:
+        # PDF 파일 읽기
+        content = await file.read()
+        
+        # PDF 텍스트 추출
+        try:
+            import PyPDF2
+            import io
+            
+            pdf_reader = PyPDF2.PdfReader(io.BytesIO(content))
+            text_content = ""
+            for page in pdf_reader.pages:
+                text_content += page.extract_text() + "\n"
+        except ImportError:
+            text_content = content.decode('utf-8', errors='ignore')
+        
+        if not text_content.strip():
+            raise HTTPException(status_code=400, detail="PDF에서 텍스트를 추출할 수 없습니다.")
+        
+        # 문서 서비스 초기화
+        doc_service = DocumentService()
+        chunk_service = ChunkService()
+        
+        # 문서 생성
+        document = Document(
+            title=title,
+            file_name=file.filename,
+            file_type="pdf",
+            content=text_content,
+            source_url=f"admin://pdf/{file.filename}",
+            metadata={
+                "source": source,
+                "category": category,
+                "upload_type": "pdf",
+                "original_filename": file.filename
+            }
+        )
+        
+        # 문서 저장
+        document_id = doc_service.create_document(document)
+        
+        # 청크 생성 및 임베딩
+        chunk_ids = chunk_service.create_chunks_for_document(
+            document_id,
+            text_content,
+            embedding_model,
+            chunk_size=500,
+            chunk_overlap=50
+        )
+        
+        return {
+            "success": True,
+            "message": "PDF 파일이 성공적으로 업로드되었습니다.",
+            "document_id": document_id,
+            "chunks_created": len(chunk_ids),
+            "extracted_text_length": len(text_content)
+        }
+        
+    except Exception as e:
+        logger.error(f"PDF 파일 업로드 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"PDF 파일 업로드 실패: {str(e)}")
 
 @router.get("/documents")
 async def list_documents():

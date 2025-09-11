@@ -20,3 +20,6 @@ PyMuPDF
 psycopg2-binary
 numpy
 PyPDF2
+
+# FastAPI multipart 지원
+python-multipart
