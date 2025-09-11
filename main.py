@@ -12,6 +12,8 @@ from config.app_config import CROSS_ENCODER_MODEL
 from controllers.rag_controller import router as rag_router
 from controllers.summary_controller import router as summary_router
 from controllers.admin_controller import router as admin_router
+from controllers.english_rag_controller import router as english_rag_router
+from controllers.english_summary_controller import router as english_summary_router
 # PostgreSQL 기반 RAG 서비스
 
 
@@ -108,6 +110,8 @@ async def detailed_health_check():
 app.include_router(rag_router)
 app.include_router(summary_router)
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
+app.include_router(english_rag_router)
+app.include_router(english_summary_router)
 
 
 if __name__ == "__main__":
