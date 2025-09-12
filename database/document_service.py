@@ -229,14 +229,23 @@ class ChunkService:
         """키워드 기반 검색"""
         # 호랑이 관련 키워드들
         keywords = [
-            "호작도", "용호도", "산신도", "호렵도", "월하송림호족도",
+            "호작도", "용호도", "산신도", "호렵도", "월하송림호족도", "호호도",
             "호랑이", "범", "호", "까치", "호족도"
         ]
         
         # 쿼리에서 키워드 추출
         found_keywords = [kw for kw in keywords if kw in query]
         
+        # 호호도 관련 키워드 매핑 (호호도 -> 호작도)
+        if "호호도" in found_keywords and "호작도" not in found_keywords:
+            found_keywords.append("호작도")
+            print(f"키워드 검색 - 호호도 관련으로 호작도 추가")
+        
+        print(f"키워드 검색 - 쿼리: {query}")
+        print(f"키워드 검색 - 찾은 키워드: {found_keywords}")
+        
         if not found_keywords:
+            print("키워드 검색 - 매칭되는 키워드 없음")
             return []
         
         with get_db_cursor() as (cursor, conn):
@@ -259,6 +268,8 @@ class ChunkService:
                 ORDER BY dc.id
                 LIMIT {match_count}
             """
+            
+            print(f"키워드 검색 SQL: {query_sql}")
             
             cursor.execute(query_sql)
             results = cursor.fetchall()

@@ -159,7 +159,50 @@ class PostgresRAGService:
             logger.info(f"    Top {i+1}: {result.document_title} (Similarity: {result.similarity:.4f})")
             logger.info(f"    Content: {result.chunk_text[:100]}...")
 
-        # ----------------- 3) 컨텍스트 구성 -----------------
+        # ----------------- 3) "모르는 정보" 처리 로직 -----------------
+        # 검색 결과가 없거나 유사도가 너무 낮은 경우
+        if not search_results:
+            logger.info("검색 결과가 없음 - '모르겠다' 응답 생성")
+            return self._generate_unknown_response(user_message, character)
+        
+        # 최고 유사도 점수 확인
+        max_similarity = max(result.similarity for result in search_results)
+        logger.info(f"최고 유사도 점수: {max_similarity:.4f}")
+        
+        # 유사도 임계값 (0.7 이하면 "모르겠다" 응답)
+        SIMILARITY_THRESHOLD = 0.7
+        if max_similarity < SIMILARITY_THRESHOLD:
+            logger.info(f"유사도가 임계값({SIMILARITY_THRESHOLD})보다 낮음 - '모르겠다' 응답 생성")
+            return self._generate_unknown_response(user_message, character)
+        
+        # 추가 검증: 검색 결과에서 질문의 핵심 키워드가 실제로 포함되어 있는지 확인
+        user_message_lower = user_message.lower()
+        question_keywords = []
+        
+        # 한글 키워드 추출 (조사 제거)
+        import re
+        korean_words = re.findall(r'[가-힣]{2,}', user_message)
+        particles = ['의', '은', '는', '이', '가', '을', '를', '에', '에서', '로', '으로', '와', '과', '도', '만', '부터', '까지']
+        
+        for word in korean_words:
+            clean_word = word
+            for particle in particles:
+                if clean_word.endswith(particle):
+                    clean_word = clean_word[:-len(particle)]
+                    break
+            if len(clean_word) >= 2:
+                question_keywords.append(clean_word)
+        
+        # 검색 결과에서 질문의 핵심 키워드가 실제로 포함되어 있는지 확인
+        context_text = " ".join([result.chunk_text for result in search_results]).lower()
+        keyword_found = any(keyword.lower() in context_text for keyword in question_keywords)
+        
+        
+        if not keyword_found and question_keywords:
+            logger.info(f"질문의 핵심 키워드({question_keywords})가 검색 결과에 없음 - '모르겠다' 응답 생성")
+            return self._generate_unknown_response(user_message, character)
+
+        # ----------------- 4) 컨텍스트 구성 -----------------
         context = "\n\n".join([
             f"[{result.document_title}] {result.chunk_text}" 
             for result in search_results
@@ -301,3 +344,32 @@ class PostgresRAGService:
                 break
         
         return [chunk for chunk in chunks if chunk.strip()]
+    
+    def _generate_unknown_response(self, user_message: str, character: str) -> ChatResponse:
+        """
+        모르는 정보에 대한 응답 생성
+        
+        Args:
+            user_message: 사용자 질문
+            character: 캐릭터 이름
+            
+        Returns:
+            ChatResponse: "모르겠다" 응답
+        """
+        char_style = CHARACTER_STYLE[character]
+        
+        # 캐릭터별 "모르겠다" 응답 템플릿
+        unknown_responses = {
+            "rumi": f"전시와 관련이 없거나, 제가 잘 모르는 정보에요!",
+            "mira": f"전시와 관련이 없거나, 제가 잘 모르는 정보에요!",
+            "zoey": f"전시와 관련이 없거나, 제가 잘 모르는 정보에요!",
+            "jinu": f"전시와 관련이 없거나, 제가 잘 모르는 정보에요!"
+        }
+        
+        response_text = unknown_responses.get(character, unknown_responses["rumi"])
+        
+        logger.info(f"Generated 'unknown' response: {response_text}")
+        return ChatResponse(
+            response=response_text,
+            sources=[]
+        )

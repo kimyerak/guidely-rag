@@ -18,7 +18,7 @@ class EnglishRelevanceService:
             "art", "artwork", "painting", "paintings", "traditional", "culture",
             
             # Tiger art specific
-            "hwachodo", "yonghodo", "sanshindo", "horyeopdo", "tiger painting",
+            "hwachodo", "yonghodo", "sanshindo", "horyeopdo", "maenghodo", "tiger painting",
             "tiger art", "korean tiger", "traditional tiger", "tiger symbolism",
             
             # Museum and cultural terms
@@ -72,7 +72,7 @@ class EnglishRelevanceService:
                 logger.info(f"Query accepted due to relevant keyword: {keyword}")
                 return True
         
-        # If no keywords match, be lenient for exhibition-related queries
+        # If no keywords match, be more strict for exhibition-related queries
         exhibition_indicators = [
             "what", "how", "when", "where", "why", "tell me", "explain",
             "show", "describe", "about", "information", "details"
@@ -81,10 +81,10 @@ class EnglishRelevanceService:
         has_question_word = any(indicator in query_lower for indicator in exhibition_indicators)
         logger.info(f"Has question word: {has_question_word}")
         
-        # Be more lenient - accept any question longer than 5 characters
-        if has_question_word and len(query_lower) > 5:
-            logger.info("Query accepted as general exhibition question")
-            return True
+        # Be more strict - reject questions without relevant keywords
+        if has_question_word:
+            logger.info("Query rejected - question word without relevant keywords")
+            return False
         
         # Accept any query that mentions "tiger" or "exhibition" even without question words
         if "tiger" in query_lower or "exhibition" in query_lower:

@@ -89,6 +89,33 @@ class EnglishPostgresRAGService:
             
             logger.info(f"Found {len(top_results)} relevant chunks")
             
+            # Check for "unknown information" - no results or low similarity
+            if not top_results:
+                logger.info("No search results found - generating 'unknown' response")
+                return self._generate_unknown_english_response(query, character)
+            
+            # Check maximum similarity score
+            max_similarity = max(result.similarity for result in top_results)
+            logger.info(f"Maximum similarity score: {max_similarity:.4f}")
+            
+            # Similarity threshold (if below 0.6, generate "unknown" response)
+            SIMILARITY_THRESHOLD = 0.6
+            if max_similarity < SIMILARITY_THRESHOLD:
+                logger.info(f"Similarity below threshold ({SIMILARITY_THRESHOLD}) - generating 'unknown' response")
+                return self._generate_unknown_english_response(query, character)
+            
+            # Additional validation: Check if question keywords are actually in search results
+            import re
+            english_words = re.findall(r'[a-zA-Z]{3,}', query)
+            question_keywords = english_words
+            
+            context_text = " ".join([result.chunk_text for result in top_results]).lower()
+            keyword_found = any(keyword.lower() in context_text for keyword in question_keywords)
+            
+            if not keyword_found and question_keywords:
+                logger.info(f"Question keywords({question_keywords}) not found in search results - generating 'unknown' response")
+                return self._generate_unknown_english_response(query, character)
+            
             # Build context from retrieved chunks
             context_parts = []
             sources = []
@@ -160,3 +187,30 @@ Response:"""
                 "response": "I'm sorry, I'm having trouble accessing information about the Tiger Exhibition right now. Please try again later or visit the museum for more details!",
                 "sources": []
             }
+    
+    def _generate_unknown_english_response(self, query: str, character: str) -> Dict[str, Any]:
+        """
+        Generate English response for unknown information
+        
+        Args:
+            query: User query
+            character: Character name
+            
+        Returns:
+            Dict containing "unknown" response
+        """
+        # Character-specific "unknown" response templates
+        unknown_responses = {
+            "rumi": "Hmm... I'm not sure about that! 😅 I know a lot about the Tiger Exhibition, but I still need to study more about other topics. Feel free to ask me anything about the Tiger Exhibition!",
+            "mira": "Well... I'm not certain about that part. I can tell you all about the Tiger Exhibition, but I'm not sure about other subjects. Please ask me more about the exhibition!",
+            "zoey": "Oh? I don't know about that either! 🤔 I know lots of interesting stories about the Tiger Exhibition, but I still need to learn about other things! Ask me anything about the exhibition!",
+            "jinu": "I apologize, but I don't have accurate information about that. I can provide precise information about the Tiger Exhibition, but I'm not sure about other topics. Please ask me about the exhibition."
+        }
+        
+        response_text = unknown_responses.get(character, unknown_responses["rumi"])
+        
+        logger.info(f"Generated English 'unknown' response: {response_text}")
+        return {
+            "response": response_text,
+            "sources": []
+        }
